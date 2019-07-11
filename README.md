@@ -23,13 +23,15 @@ const roleSchema = new Schema({
   name: String,
   admin: Boolean
 });
-const Role = mongoose.model('role', roleSchema, 'roles');
+const Role = mongoose.model('Role', roleSchema, 'Roles');
 
 const ruleSchema = new Schema({
-  role: { type: ObjectId, ref: 'role' }
+  role: { type: ObjectId, ref: 'Role' }
 });
 ruleSchema.plugin(require('mongoose-subquery'));
-const Rule = mongoose.model('rule', ruleSchema, 'rules');
+const Rule = mongoose.model('Rule', ruleSchema, 'Rules');
 
 Rule.find({ role: { $subquery: { admin: true } } });
 ```
+
+Will return all rules where the referenced role matches the subquery `{ admin: true }`
