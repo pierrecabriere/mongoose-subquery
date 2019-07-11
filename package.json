@@ -6,8 +6,8 @@
   "scripts": {
     "build": "tsc"
   },
-  "author": "hello@pierrecabriere.fr",
-  "license": "ISC",
+  "author": "Pierre Cabriere <hello@pierrecabriere.fr>",
+  "license": "Apache 2.0",
   "keywords": ["mongoose", "query", "subquery", "ref", "reference", "nested", "field"],
   "homepage": "https://github.com/pierrecabriere/mongoose-subquery",
   "devDependencies": {
