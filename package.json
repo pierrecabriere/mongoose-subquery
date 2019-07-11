@@ -1,0 +1,10 @@
+{
+  "name": "mongoose-subquery",
+  "version": "0.1.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+  },
+  "author": "",
+  "license": "ISC"
+}
