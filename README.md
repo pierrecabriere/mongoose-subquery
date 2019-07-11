@@ -1,5 +1,7 @@
 # mongoose-subquery
 
+[![npm version](https://badge.fury.io/js/mongoose-subquery.svg)](https://badge.fury.io/js/mongoose-subquery)
+
 **mongoose-subquery** provides a new `$subquery` operator to make a query on a reference document field.
 
 # Installation
