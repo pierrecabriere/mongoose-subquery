@@ -1,10 +1,10 @@
 import { Schema } from "mongoose";
 
 interface IOptions {
-  transformSubquery: Function
+  transformSubquery?: Function
 }
 
-function mongooseSubquery(schema: Schema, options?: IOptions) {
+function mongooseSubquery(schema: Schema, options: IOptions = {}) {
   const decodeQuery = async function () {
     const mongooseQuery = this;
 
