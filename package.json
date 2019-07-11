@@ -1,6 +1,6 @@
 {
   "name": "mongoose-subquery",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "mongoose-subquery provides a new operator to query on a reference document field",
   "main": "dist/index.js",
   "scripts": {
