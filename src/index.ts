@@ -12,7 +12,7 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
     const referenceFields = {};
     Object.keys(schema.obj).forEach(fieldKey => {
       const field = schema.obj[fieldKey];
-      if (field.type && field.type.schemaName === "ObjectId" && field.ref) {
+      if (field && field.type && field.type.schemaName === "ObjectId" && field.ref) {
         referenceFields[fieldKey] = field;
       }
     });
@@ -24,7 +24,7 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
 
       await Promise.all(Object.keys(obj).map(async key => {
         const value = obj[key];
-        if (typeof value === "object" && value.$subquery) {
+        if (value && typeof value === "object" && value.$subquery) {
           // @ts-ignore
           const referenceModel = mongooseQuery.model.db.model(referenceFields[key].ref);
           let subquery = referenceModel.find(value.$subquery, "_id");

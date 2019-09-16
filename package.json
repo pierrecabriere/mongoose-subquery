@@ -1,6 +1,6 @@
 {
   "name": "mongoose-subquery",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "mongoose-subquery provides a new operator to query on a reference document field",
   "main": "dist/index.js",
   "scripts": {
@@ -8,7 +8,15 @@
   },
   "author": "Pierre Cabriere <hello@pierrecabriere.fr>",
   "license": "Apache 2.0",
-  "keywords": ["mongoose", "query", "subquery", "ref", "reference", "nested", "field"],
+  "keywords": [
+    "mongoose",
+    "query",
+    "subquery",
+    "ref",
+    "reference",
+    "nested",
+    "field"
+  ],
   "homepage": "https://github.com/pierrecabriere/mongoose-subquery",
   "devDependencies": {
     "@types/mongoose": "^5.5.6",
