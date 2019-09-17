@@ -35,7 +35,7 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
           const resIds = res.map(doc => doc.id);
           delete value.$subquery;
           value.$in = resIds;
-        } else if (typeof value === "object") {
+        } else if (value && typeof value === "object") {
           await decodeRecursive(value);
         }
       }));
