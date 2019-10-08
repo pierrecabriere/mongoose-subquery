@@ -1,7 +1,8 @@
 import { Schema } from "mongoose";
 
 interface IOptions {
-  transformSubquery?: Function
+  transformSubquery?: Function,
+  transformSchema?: Function
 }
 
 function mongooseSubquery(schema: Schema, options: IOptions = {}) {
@@ -12,7 +13,7 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
     const referenceFields = {};
     Object.keys(schema.obj).forEach(fieldKey => {
       const field = schema.obj[fieldKey];
-      if (field && field.type && field.type.schemaName === "ObjectId" && field.ref) {
+      if (field && field.type && field.type.name === "ObjectId" && field.ref) {
         referenceFields[fieldKey] = field;
       }
     });
@@ -24,7 +25,10 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
 
       await Promise.all(Object.keys(obj).map(async key => {
         const value = obj[key];
-        if (value && typeof value === "object" && value.$subquery) {
+        if (value && typeof value === "object" && value.$subquery && referenceFields[key]) {
+          if (options.transformSubquery) {
+            options.transformSchema && await options.transformSchema(schema, mongooseQuery, obj);
+          }
           // @ts-ignore
           const referenceModel = mongooseQuery.model.db.model(referenceFields[key].ref);
           let subquery = referenceModel.find(value.$subquery, "_id");
@@ -41,7 +45,7 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
       }));
     };
 
-    await decodeRecursive(mongooseQuery.getQuery());
+    mongooseQuery.getQuery && await decodeRecursive(mongooseQuery.getQuery());
   };
 
   schema.pre('count', decodeQuery);
