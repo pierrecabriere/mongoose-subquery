@@ -1,8 +1,8 @@
 import {Schema} from "mongoose";
 
 interface IOptions {
-  transformSubquery?: Function,
-  transformSchema?: Function
+  initQuery?: Function
+  beforeQuery?: Function,
 }
 
 function mongooseSubquery(schema: Schema, options: IOptions = {}) {
@@ -23,37 +23,40 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
     });
 
     const decodeRecursive = async function (obj, parentKey?) {
-      if (Array.isArray(obj)) {
-        obj = Object.assign({}, obj);
-      }
-
       await Promise.all(Object.keys(obj).map(async key => {
         const value = obj[key];
         if (value && typeof value === "object" && value.$subquery) {
-          if (options.transformSubquery) {
-            options.transformSchema && await options.transformSchema(schema, mongooseQuery, obj);
-          }
-          const referenceModel = mongooseQuery.model.db.model(referenceFields[parentKey || key]);
-          let subquery = referenceModel.find(value.$subquery, "_id");
-          let operator = value.$operator || "$in";
-          delete value.$subquery;
-          delete value.$operator;
+          const modelName = referenceFields[parentKey || key];
+          if (modelName) {
+            if (options.initQuery) {
+              await options.initQuery(mongooseQuery, schema, parentKey || key, obj, modelName);
+            }
 
-          if (options.transformSubquery) {
-            subquery = await options.transformSubquery(subquery);
+            const referenceModel = mongooseQuery.model.db.model(modelName);
+            let subquery = referenceModel.find(value.$subquery, "_id");
+            let operator = value.$operator || "$in";
+            delete value.$subquery;
+            delete value.$operator;
+
+            if (options.beforeQuery) {
+              await options.beforeQuery(subquery);
+            }
+
+            const res = await subquery;
+            const resIds = res.map(doc => doc.id);
+            value[operator] = resIds;
           }
-          const res = await subquery;
-          const resIds = res.map(doc => doc.id);
-          value[operator] = resIds;
         } else if (value && typeof value === "object") {
-          await decodeRecursive(value, !/^\$/.test(key) ? key : parentKey);
+          await decodeRecursive(value, !/^\$/.test(key) && !Array.isArray(obj) ? key : parentKey);
         }
       }));
     };
 
     try {
       await decodeRecursive(query);
+      mongooseQuery.setQuery(query);
     } catch (e) {
+      console.log(e);
     }
   };
 
