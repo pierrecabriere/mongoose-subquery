@@ -1,4 +1,4 @@
-import { Schema } from "mongoose";
+import {Schema} from "mongoose";
 
 interface IOptions {
   transformSubquery?: Function,
@@ -8,44 +8,53 @@ interface IOptions {
 function mongooseSubquery(schema: Schema, options: IOptions = {}) {
   const decodeQuery = async function () {
     const mongooseQuery = this;
+    const query = mongooseQuery.getQuery();
 
-    // get reference fields in schema
     const referenceFields = {};
-    Object.keys(schema.obj).forEach(fieldKey => {
-      const field = schema.obj[fieldKey];
-      if (field && field.type && field.type.name === "ObjectId" && field.ref) {
-        referenceFields[fieldKey] = field;
+    // @ts-ignore
+    const paths = schema.paths;
+    Object.keys(paths).forEach(fieldKey => {
+      const field = paths[fieldKey];
+      if ((field.constructor.name === "ObjectId" && field.options.ref)) {
+        referenceFields[fieldKey] = field.options.ref;
+      } else if (field.constructor.name === "SchemaArray" && (field.$embeddedSchemaType.constructor.name === "ObjectId" && field.$embeddedSchemaType.options.ref)) {
+        referenceFields[fieldKey] = field.$embeddedSchemaType.options.ref;
       }
     });
 
-    const decodeRecursive = async function (obj) {
+    const decodeRecursive = async function (obj, parentKey?) {
       if (Array.isArray(obj)) {
         obj = Object.assign({}, obj);
       }
 
       await Promise.all(Object.keys(obj).map(async key => {
         const value = obj[key];
-        if (value && typeof value === "object" && value.$subquery && referenceFields[key]) {
+        if (value && typeof value === "object" && value.$subquery) {
           if (options.transformSubquery) {
             options.transformSchema && await options.transformSchema(schema, mongooseQuery, obj);
           }
-          // @ts-ignore
-          const referenceModel = mongooseQuery.model.db.model(referenceFields[key].ref);
+          const referenceModel = mongooseQuery.model.db.model(referenceFields[parentKey || key]);
           let subquery = referenceModel.find(value.$subquery, "_id");
+          let operator = value.$operator || "$in";
+          delete value.$subquery;
+          delete value.$operator;
+
           if (options.transformSubquery) {
             subquery = await options.transformSubquery(subquery);
           }
           const res = await subquery;
           const resIds = res.map(doc => doc.id);
-          delete value.$subquery;
-          value.$in = resIds;
+          value[operator] = resIds;
         } else if (value && typeof value === "object") {
-          await decodeRecursive(value);
+          await decodeRecursive(value, !/^\$/.test(key) ? key : parentKey);
         }
       }));
     };
 
-    mongooseQuery.getQuery && await decodeRecursive(mongooseQuery.getQuery());
+    try {
+      await decodeRecursive(query);
+    } catch (e) {
+    }
   };
 
   schema.pre('count', decodeQuery);
