@@ -3,6 +3,8 @@ import {Schema} from "mongoose";
 interface IOptions {
   initQuery?: Function
   beforeQuery?: Function,
+  beforeInit?: Function
+  preventRunning?: boolean
 }
 
 function mongooseSubquery(schema: Schema, options: IOptions = {}) {
@@ -10,9 +12,12 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
     const mongooseQuery = this;
     const query = mongooseQuery.getQuery();
 
+    if (options.beforeInit) {
+      await options.beforeInit(mongooseQuery);
+    }
+
     const referenceFields = {};
-    // @ts-ignore
-    const paths = schema.paths;
+    const paths = mongooseQuery.model.schema.paths;
     Object.keys(paths).forEach(fieldKey => {
       const field = paths[fieldKey];
       if ((field.constructor.name === "ObjectId" && field.options.ref)) {
@@ -29,20 +34,20 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
           const modelName = referenceFields[parentKey || key];
           if (modelName) {
             if (options.initQuery) {
-              await options.initQuery(mongooseQuery, schema, parentKey || key, obj, modelName);
+              await options.initQuery(mongooseQuery, parentKey || key, obj, modelName);
             }
 
             const referenceModel = mongooseQuery.model.db.model(modelName);
-            let subquery = referenceModel.find(value.$subquery, "_id");
+            let subquery = referenceModel.where(value.$subquery).select("_id");
+            if (options.beforeQuery) {
+              await options.beforeQuery(subquery, mongooseQuery);
+            }
+
             let operator = value.$operator || "$in";
             delete value.$subquery;
             delete value.$operator;
 
-            if (options.beforeQuery) {
-              await options.beforeQuery(subquery);
-            }
-
-            const res = await subquery;
+            const res = await subquery.find();
             const resIds = res.map(doc => doc.id);
             value[operator] = resIds;
           }
@@ -52,11 +57,13 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
       }));
     };
 
-    try {
+    mongooseQuery.decodeSubquery = async () => {
       await decodeRecursive(query);
       mongooseQuery.setQuery(query);
-    } catch (e) {
-      console.log(e);
+    }
+
+    if (!options.preventRunning) {
+      await mongooseQuery.decodeSubquery();
     }
   };
 
