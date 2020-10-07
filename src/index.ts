@@ -2,8 +2,9 @@ import {Schema} from "mongoose";
 
 interface IOptions {
   initQuery?: Function
-  beforeQuery?: Function,
+  beforeQuery?: Function
   beforeInit?: Function
+  resolve?: Function
   preventRunning?: boolean
 }
 
@@ -47,7 +48,12 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
             delete value.$subquery;
             delete value.$operator;
 
-            const res = await subquery.find();
+            let res;
+            if (options.resolve) {
+              res = await options.resolve(subquery, mongooseQuery);
+            } else {
+              res = await subquery.find();
+            }
             const resIds = res.map(doc => doc.id);
             value[operator] = resIds;
           }
