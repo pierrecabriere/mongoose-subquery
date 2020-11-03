@@ -74,6 +74,7 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
   };
 
   schema.pre('count', decodeQuery);
+  schema.pre('countDocuments', decodeQuery);
   schema.pre('deleteMany', decodeQuery);
   schema.pre('deleteOne', decodeQuery);
   schema.pre('find', decodeQuery);
