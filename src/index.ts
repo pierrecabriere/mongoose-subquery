@@ -54,8 +54,7 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
             } else {
               res = await subquery.find();
             }
-            const resIds = res.map(doc => doc.id);
-            value[operator] = resIds;
+            value[operator] = res.map(doc => doc._id);
           }
         } else if (value && typeof value === "object") {
           await decodeRecursive(value, !/^\$/.test(key) && !Array.isArray(obj) ? key : parentKey);
