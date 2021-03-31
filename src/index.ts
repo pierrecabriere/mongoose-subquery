@@ -44,7 +44,7 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
               await options.beforeQuery(subquery, mongooseQuery);
             }
 
-            let operator = value.$operator || "$in";
+            let operator = value.$operator;
             let _options = value.$options || {};
             delete value.$subquery;
             delete value.$operator;
@@ -58,7 +58,12 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
             } else {
               res = await subquery.find();
             }
-            value[operator] = res;
+
+            if (/^\$/.test(key) && !operator) {
+              obj[key] = res;
+            } else {
+              value[operator || "$in"] = res;
+            }
           }
         } else if (value && typeof value === "object") {
           await decodeRecursive(value, !/^\$/.test(key) && !Array.isArray(obj) ? key : parentKey);
