@@ -1,4 +1,4 @@
-import {Schema} from "mongoose";
+import {Schema,Query} from "mongoose";
 
 interface IOptions {
   initQuery?: Function
@@ -10,6 +10,10 @@ interface IOptions {
 
 function mongooseSubquery(schema: Schema, options: IOptions = {}) {
   const decodeQuery = async function () {
+    if (!(this instanceof Query)) {
+      return;
+    }
+
     const mongooseQuery = this;
     const query = mongooseQuery.getQuery();
 
@@ -58,6 +62,8 @@ function mongooseSubquery(schema: Schema, options: IOptions = {}) {
             } else {
               res = await subquery.find();
             }
+
+            res = Array.isArray(res) ? res.map(r => r._id) : res && typeof res === "object" && "_id" in res ? res._id : res;
 
             if (/^\$/.test(key) && !operator) {
               obj[key] = res;
