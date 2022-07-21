@@ -6,19 +6,53 @@
 
 # Installation
 
-The `mongoose-subquery` module exposes a single function that you can
-pass to [Mongoose schema's `plugin()` function](https://mongoosejs.com/docs/api.html#schema_Schema-plugin).
+The `mongoose-subquery` module adds a method to decode $subquery operator in your queries. By default, the plugin bind this method with all pre middlewares to automatically decode the input payload.
+However, you can configure the plugin to prevent binding some middlewares and then calling the `Query.decodeSubquery` function.
 
-```javascript
+```typescript
+import mongooseSubquery from "mongoose-subquery";
+
 const schema = new mongoose.Schema({
-  ...
+    ...
 });
-schema.plugin(require('mongoose-subquery'));
+schema.plugin(mongooseSubquery, { ...options });
+```
+
+# Configuration
+
+```typescript
+interface MongooseSubqueryOptions {
+  initQuery?: (query: mongoose.Query<any, any, any, any>, key: string, obj: object, modelName: string) => void | Promise<void>;
+  beforeQuery?: (subquery: mongoose.Query<any, any, any, any>, query: mongoose.Query<any, any, any, any>) => void | Promise<void>;
+  resolve?: (subquery: mongoose.Query<any, any, any, any>, query: mongoose.Query<any, any, any, any>) => void | Promise<void>;
+  bindHooks?: string[];
+}
+
+const defaultOptions: MongooseSubqueryOptions = {
+  bindHooks: [
+    "count",
+    "countDocuments",
+    "deleteMany",
+    "deleteOne",
+    "estimatedDocumentCount",
+    "find",
+    "findOne",
+    "findOneAndDelete",
+    "findOneAndRemove",
+    "findOneAndReplace",
+    "findOneAndUpdate",
+    "remove",
+    "replaceOne",
+    "update",
+    "updateOne",
+    "updateMany",
+  ],
+};
 ```
 
 # Example
 
-```javascript
+```typescript
 const roleSchema = new Schema({
   name: String,
   admin: Boolean
