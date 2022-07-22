@@ -3,10 +3,9 @@ import { MongooseSubqueryOptions } from "./index";
 export async function decodeSubquery(query: any, options: MongooseSubqueryOptions = {}) {
   const cacheKey = JSON.stringify(query._conditions);
 
-  query.options.decodeSubqueryPromises = query.options.decodeSubqueryPromises || {};
-  if (query.options.decodeSubqueryPromises[cacheKey]) {
-    console.warn("This query is already decoding, please wait for the returned Promise.");
-    return query.options.decodeSubqueryPromises[cacheKey].then((obj) => (query._conditions = obj));
+  query.decodeSubqueryPromises = query.decodeSubqueryPromises || {};
+  if (query.decodeSubqueryPromises[cacheKey]) {
+    return query.decodeSubqueryPromises[cacheKey].then((obj) => (query._conditions = obj));
   }
 
   const decodeRecursive = async function (obj, referenceFields?, parentKey?) {
@@ -71,6 +70,6 @@ export async function decodeSubquery(query: any, options: MongooseSubqueryOption
     return obj;
   };
 
-  query.options.decodeSubqueryPromises[cacheKey] = decodeRecursive(JSON.parse(JSON.stringify(query._conditions)));
-  return query.options.decodeSubqueryPromises[cacheKey].then((obj) => (query._conditions = obj));
+  query.decodeSubqueryPromises[cacheKey] = decodeRecursive(JSON.parse(JSON.stringify(query._conditions)));
+  return query.decodeSubqueryPromises[cacheKey].then((obj) => (query._conditions = obj));
 }
