@@ -25,7 +25,7 @@ export async function decodeSubquery(query: any, options: MongooseSubqueryOption
     await Promise.all(
       Object.keys(obj).map(async (key) => {
         const value = obj[key];
-        if (value && typeof value === "object" && value.$subquery) {
+        if (value && typeof value === "object" && "$subquery" in value) {
           const modelName = referenceFields[parentKey || key];
           if (modelName) {
             if (options.initQuery) {
