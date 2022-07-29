@@ -3,12 +3,22 @@ import { MongooseSubqueryOptions } from "./index";
 export async function decodeSubquery(query: any, options: MongooseSubqueryOptions = {}) {
   const cacheKey = JSON.stringify(query._conditions);
 
-  query.decodeSubqueryPromises = query.decodeSubqueryPromises || {};
-  if (query.decodeSubqueryPromises[cacheKey]) {
-    return query.decodeSubqueryPromises[cacheKey].then((obj) => (query._conditions = obj));
+  if (query.decodeSubqueryPromises?.[cacheKey]) {
+    return query.decodeSubqueryPromises[cacheKey];
   }
 
-  const decodeRecursive = async function (obj, referenceFields?, parentKey?) {
+  const decodeRecursive = async function (obj?, referenceFields?, parentKey?) {
+    let initial;
+
+    if (!obj) {
+      initial = JSON.stringify(query._conditions);
+      obj = JSON.parse(JSON.stringify(query._conditions));
+
+      if (options.beforeDecode) {
+        await options.beforeDecode(query, obj);
+      }
+    }
+
     if (!referenceFields) {
       referenceFields = {};
       const paths = query.model.schema.paths;
@@ -33,10 +43,7 @@ export async function decodeSubquery(query: any, options: MongooseSubqueryOption
             }
 
             const referenceModel = query.model.db.model(modelName);
-            let subquery = referenceModel.where(value.$subquery).select("_id");
-            if (options.beforeQuery) {
-              await options.beforeQuery(subquery, query);
-            }
+            let subquery = referenceModel.where(value.$subquery).select("_id").lean();
 
             let operator = value.$operator;
             let _options = value.$options || {};
@@ -67,9 +74,18 @@ export async function decodeSubquery(query: any, options: MongooseSubqueryOption
       }),
     );
 
+    if (initial) {
+      const conditionsChanged = JSON.stringify(query._conditions) === initial;
+      if (conditionsChanged) {
+        query._conditions = obj;
+      }
+    }
+
     return obj;
   };
 
-  query.decodeSubqueryPromises[cacheKey] = decodeRecursive(JSON.parse(JSON.stringify(query._conditions)));
-  return query.decodeSubqueryPromises[cacheKey].then((obj) => (query._conditions = obj));
+  query.decodeSubqueryPromises = query.decodeSubqueryPromises || {};
+  query.decodeSubqueryPromises[cacheKey] = decodeRecursive();
+
+  return query.decodeSubqueryPromises[cacheKey];
 }

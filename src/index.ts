@@ -2,8 +2,8 @@ import mongoose, { Schema } from "mongoose";
 import { decodeSubquery } from "./utils";
 
 interface MongooseSubqueryOptions {
+  beforeDecode?: (query: mongoose.Query<any, any, any, any>, obj: object) => void | Promise<void>;
   initQuery?: (query: mongoose.Query<any, any, any, any>, key: string, obj: object, modelName: string) => void | Promise<void>;
-  beforeQuery?: (subquery: mongoose.Query<any, any, any, any>, query: mongoose.Query<any, any, any, any>) => void | Promise<void>;
   resolve?: (subquery: mongoose.Query<any, any, any, any>, query: mongoose.Query<any, any, any, any>) => void | Promise<void>;
   bindHooks?: string[];
 }
@@ -33,13 +33,13 @@ function mongooseSubqueryPlugin(schema: Schema, options: MongooseSubqueryOptions
   options = Object.assign({}, defaultOptions, options);
 
   // @ts-ignore
-  schema.query.decodeSubquery = async function () {
-    await decodeSubquery(this, options);
+  schema.query.decodeSubquery = function () {
+    return decodeSubquery(this, options);
   };
 
   function run(next) {
     if (typeof this.decodeSubquery === "function") {
-      this.decodeSubquery().then(next);
+      this.decodeSubquery().then(() => next());
     } else {
       next();
     }
