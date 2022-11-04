@@ -13,10 +13,10 @@ export async function decodeSubquery(query: any, options: MongooseSubqueryOption
     if (!obj) {
       initial = JSON.stringify(query._conditions);
       obj = JSON.parse(JSON.stringify(query._conditions));
+    }
 
-      if (options.beforeDecode) {
-        await options.beforeDecode(query, obj);
-      }
+    if (options.beforeDecode) {
+      await options.beforeDecode(query, obj);
     }
 
     if (!referenceFields) {
@@ -53,12 +53,7 @@ export async function decodeSubquery(query: any, options: MongooseSubqueryOption
 
             subquery.setOptions(_options);
 
-            let res;
-            if (options.resolve) {
-              res = await options.resolve(subquery, query);
-            } else {
-              res = await subquery.find();
-            }
+            let res = await options.resolve(subquery, query);
 
             res = Array.isArray(res) ? res.map((r) => r._id) : res && typeof res === "object" && "_id" in res ? res._id : new String(res);
 

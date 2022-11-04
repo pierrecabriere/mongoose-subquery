@@ -4,11 +4,12 @@ import { decodeSubquery } from "./utils";
 interface MongooseSubqueryOptions {
   beforeDecode?: (query: mongoose.Query<any, any, any, any>, obj: object) => void | Promise<void>;
   initQuery?: (query: mongoose.Query<any, any, any, any>, key: string, obj: object, modelName: string) => void | Promise<void>;
-  resolve?: (subquery: mongoose.Query<any, any, any, any>, query: mongoose.Query<any, any, any, any>) => void | Promise<void>;
+  resolve?: (subquery: mongoose.Query<any, any, any, any>, query: mongoose.Query<any, any, any, any>) => any | Promise<any>;
   bindHooks?: string[];
 }
 
 const defaultOptions: MongooseSubqueryOptions = {
+  resolve: (subquery) => subquery.find(),
   bindHooks: [
     "count",
     "countDocuments",
