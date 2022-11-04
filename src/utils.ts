@@ -29,13 +29,26 @@ export async function decodeSubquery(query: any, options: MongooseSubqueryOption
         } else if (field.constructor.name === "SchemaArray" && field.$embeddedSchemaType.constructor.name === "ObjectId" && field.$embeddedSchemaType.options.ref) {
           referenceFields[fieldKey] = field.$embeddedSchemaType.options.ref;
         }
+        if (field.constructor.name === "DocumentArrayPath") {
+          Object.keys(field.$embeddedSchemaType.schema.paths).forEach((nestedKey) => {
+            const nestedField = field.$embeddedSchemaType.schema.paths[nestedKey];
+            if (
+              nestedField.constructor.name === "ObjectId" &&
+              nestedField.options.ref
+            ) {
+              console.log("nestedField", fieldKey, nestedKey, nestedField.options.ref);
+              referenceFields[`${fieldKey}.${nestedKey}`] = nestedField.options.ref;
+            }
+          });
+        }
+
       });
     }
 
     await Promise.all(
       Object.keys(obj).map(async (key) => {
         const value = obj[key];
-        if (value && typeof value === "object" && "$subquery" in value) {
+        if (value && typeof value === "object" && value['$subquery']) {
           const modelName = referenceFields[parentKey || key];
           if (modelName) {
             if (options.initQuery) {
