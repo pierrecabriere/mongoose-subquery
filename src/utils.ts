@@ -3,6 +3,10 @@ import { MongooseSubqueryOptions } from "./index";
 export async function decodeSubquery(query: any, options: MongooseSubqueryOptions = {}) {
   const cacheKey = JSON.stringify(query._conditions);
 
+  if (!/\$subquery/.test(cacheKey)) {
+    return null;
+  }
+
   if (query.decodeSubqueryPromises?.[cacheKey]) {
     return query.decodeSubqueryPromises[cacheKey];
   }
@@ -11,8 +15,8 @@ export async function decodeSubquery(query: any, options: MongooseSubqueryOption
     let initial;
 
     if (!obj) {
-      initial = JSON.stringify(query._conditions);
-      obj = JSON.parse(JSON.stringify(query._conditions));
+      initial = cacheKey;
+      obj = JSON.parse(initial);
     }
 
     if (options.beforeDecode) {

@@ -46,7 +46,7 @@ function mongooseSubqueryPlugin(schema: Schema, options: MongooseSubqueryOptions
     }
   }
 
-  options.bindHooks.forEach((h) => schema.pre(h, run));
+  options.bindHooks.forEach((h) => schema.pre(h as any, run));
 }
 
 export default mongooseSubqueryPlugin;
